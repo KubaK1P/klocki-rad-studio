@@ -1,0 +1,42 @@
+object Form4: TForm4
+  Left = 0
+  Top = 0
+  Caption = 'Form4'
+  ClientHeight = 671
+  ClientWidth = 907
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -12
+  Font.Name = 'Segoe UI'
+  Font.Style = []
+  Position = poScreenCenter
+  TextHeight = 15
+  object btnAddBlock: TButton
+    Left = 8
+    Top = 24
+    Width = 145
+    Height = 25
+    Caption = 'Add Klocek'
+    TabOrder = 0
+    OnClick = btnAddBlockClick
+  end
+  object btnDeleteLast: TButton
+    Left = 8
+    Top = 64
+    Width = 145
+    Height = 25
+    Caption = 'Delete last Klocek'
+    TabOrder = 1
+    OnClick = btnDeleteLastClick
+  end
+  object btnEvaluate: TButton
+    Left = 768
+    Top = 624
+    Width = 121
+    Height = 33
+    Caption = 'Evaluate Klocki'
+    TabOrder = 2
+    OnClick = btnEvaluateClick
+  end
+end

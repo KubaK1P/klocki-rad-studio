@@ -1,0 +1,45 @@
+//---------------------------------------------------------------------------
+
+#include <vcl.h>
+#pragma hdrstop
+
+#include "Unit5.h"
+//---------------------------------------------------------------------------
+#pragma package(smart_init)
+#pragma resource "*.dfm"
+TForm5 *Form5;
+//---------------------------------------------------------------------------
+__fastcall TForm5::TForm5(TComponent* Owner)
+	: TForm(Owner)
+{
+	rgType->ItemIndex = 0; // Default to Number
+}
+//---------------------------------------------------------------------------
+void __fastcall TForm5::btnOKClick(TObject *Sender)
+{
+	String val = edtValue->Text.Trim();
+
+	if (val.IsEmpty()) {
+		ShowMessage("Value cannot be empty.");
+		return;
+	}
+
+	// Validation Logic
+	if (rgType->ItemIndex == 0) { // Number mode
+		try {
+			StrToFloat(val);
+		} catch (...) {
+			ShowMessage("Please enter a valid numeric value.");
+			return;
+		}
+	} else { // Math Operator mode
+		String ops = "+-*/^";
+		if (val.Length() != 1 || ops.Pos(val) <= 0) {
+			ShowMessage("Please enter a valid operator (+, -, *, /, ^).");
+			return;
+		}
+	}
+
+	ModalResult = mrOk; // Only close if validation passes
+}
+//---------------------------------------------------------------------------

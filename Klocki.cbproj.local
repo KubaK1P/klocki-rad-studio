@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+  <Transactions>
+    <Transaction>2026.04.18 10:31:12.394,=C:\Users\kubak\OneDrive\Dokumenty\Embarcadero\Studio\Projects\Project1PCH1.h</Transaction>
+    <Transaction>2026.04.18 10:31:12.701,=C:\Users\kubak\OneDrive\Dokumenty\Embarcadero\Studio\Projects\Unit4.cpp</Transaction>
+    <Transaction>2026.04.18 10:31:52.670,C:\Users\kubak\OneDrive\Dokumenty\Embarcadero\Studio\Projects\klocki\KlockiPCH1.h=C:\Users\kubak\OneDrive\Dokumenty\Embarcadero\Studio\Projects\Project1PCH1.h</Transaction>
+    <Transaction>2026.04.18 10:31:52.686,C:\Users\kubak\OneDrive\Dokumenty\Embarcadero\Studio\Projects\klocki\Unit4.h=C:\Users\kubak\OneDrive\Dokumenty\Embarcadero\Studio\Projects\Unit4.h</Transaction>
+    <Transaction>2026.04.18 10:31:52.686,C:\Users\kubak\OneDrive\Dokumenty\Embarcadero\Studio\Projects\klocki\Klocki.cbproj=C:\Users\kubak\OneDrive\Dokumenty\Embarcadero\Studio\Projects\Project1.cbproj</Transaction>
+    <Transaction>2026.04.18 10:31:52.686,C:\Users\kubak\OneDrive\Dokumenty\Embarcadero\Studio\Projects\klocki\Unit4.cpp=C:\Users\kubak\OneDrive\Dokumenty\Embarcadero\Studio\Projects\Unit4.cpp</Transaction>
+    <Transaction>2026.04.18 10:31:52.686,C:\Users\kubak\OneDrive\Dokumenty\Embarcadero\Studio\Projects\klocki\Unit4.dfm=C:\Users\kubak\OneDrive\Dokumenty\Embarcadero\Studio\Projects\Unit4.dfm</Transaction>
+    <Transaction>2026.04.18 11:06:29.494,=C:\Users\kubak\OneDrive\Dokumenty\Embarcadero\Studio\Projects\klocki\Unit1.cpp</Transaction>
+    <Transaction>2026.04.18 11:06:43.284,C:\Users\kubak\OneDrive\Dokumenty\Embarcadero\Studio\Projects\klocki\Unit5.h=C:\Users\kubak\OneDrive\Dokumenty\Embarcadero\Studio\Projects\klocki\Unit1.h</Transaction>
+    <Transaction>2026.04.18 11:06:43.284,C:\Users\kubak\OneDrive\Dokumenty\Embarcadero\Studio\Projects\klocki\Unit5.dfm=C:\Users\kubak\OneDrive\Dokumenty\Embarcadero\Studio\Projects\klocki\Unit1.dfm</Transaction>
+    <Transaction>2026.04.18 11:06:43.284,C:\Users\kubak\OneDrive\Dokumenty\Embarcadero\Studio\Projects\klocki\Unit5.cpp=C:\Users\kubak\OneDrive\Dokumenty\Embarcadero\Studio\Projects\klocki\Unit1.cpp</Transaction>
+  </Transactions>
+</BorlandProject>

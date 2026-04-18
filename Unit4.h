@@ -1,0 +1,63 @@
+#ifndef Unit4H
+#define Unit4H
+//---------------------------------------------------------------------------
+#include <System.Classes.hpp>
+#include <Vcl.Controls.hpp>
+#include <Vcl.StdCtrls.hpp>
+#include <Vcl.Forms.hpp>
+#include <Vcl.ExtCtrls.hpp>
+#include <vector>
+#include <algorithm>
+#include <stack>
+#include <queue>
+
+enum class BlockType { Number, Operator, BracketOpen, BracketClose };
+
+class TMathBlock {
+public:
+    TButton* Visual;
+    BlockType Type;
+    String Value;
+    TMathBlock(TButton* V, BlockType T, String Val) : Visual(V), Type(T), Value(Val) {}
+};
+
+class TForm4 : public TForm
+{
+__published:
+    TButton *btnAddBlock;
+    TButton *btnDeleteSelected;
+    TButton *btnEvaluate;
+    TShape *shapeDivider;
+	TLabel *Label1;
+	TLabel *Label2;
+    void __fastcall btnAddBlockClick(TObject *Sender);
+    void __fastcall btnDeleteSelectedClick(TObject *Sender);
+    void __fastcall btnEvaluateClick(TObject *Sender);
+
+private:
+    std::vector<TMathBlock*> FBlocks;
+    TMathBlock* FSelectedBlock;
+    bool FIsDragging;
+    TPoint FDragStartMouse;
+    TPoint FDragStartPos;
+
+    void __fastcall CreateBlock(BlockType AType, String AValue);
+    void __fastcall SetSelection(TMathBlock* ABlock);
+    TMathBlock* __fastcall GetBlockFromButton(TObject* Sender);
+
+    // Event Handlers
+    void __fastcall BlockMouseDown(TObject *Sender, TMouseButton Button, TShiftState Shift, int X, int Y);
+    void __fastcall BlockMouseMove(TObject *Sender, TShiftState Shift, int X, int Y);
+    void __fastcall BlockMouseUp(TObject *Sender, TMouseButton Button, TShiftState Shift, int X, int Y);
+
+    // Math Engine Helpers
+    int __fastcall GetPrecedence(String op);
+    int __fastcall ApplyOp(int a, int b, String op);
+
+public:
+    __fastcall TForm4(TComponent* Owner);
+    __fastcall ~TForm4();
+};
+
+extern PACKAGE TForm4 *Form4;
+#endif

@@ -1,0 +1,45 @@
+//---------------------------------------------------------------------------
+
+#ifndef Unit4H
+#define Unit4H
+//---------------------------------------------------------------------------
+#include <System.Classes.hpp>
+#include <Vcl.Controls.hpp>
+#include <Vcl.StdCtrls.hpp>
+#include <Vcl.Forms.hpp>
+#include <vector>
+#include <algorithm> // For std::sort
+//---------------------------------------------------------------------------
+class TForm4 : public TForm
+{
+__published:	// IDE-managed Components
+	TButton *btnAddBlock;
+	TButton *btnDeleteLast;
+	TButton *btnEvaluate; // Add this in the designer
+	void __fastcall btnAddBlockClick(TObject *Sender);
+	void __fastcall btnDeleteLastClick(TObject *Sender);
+	void __fastcall btnEvaluateClick(TObject *Sender);
+
+private:	// User declarations
+	std::vector<TButton*> FBlocks;
+	void __fastcall CreateBlock(int ATypeIndex, String AValue);
+
+	// Dragging state
+	bool FIsDragging;
+	TPoint FDragStartMouse;
+	TPoint FDragStartPos;
+
+	void __fastcall BlockMouseDown(TObject *Sender, TMouseButton Button, TShiftState Shift, int X, int Y);
+	void __fastcall BlockMouseMove(TObject *Sender, TShiftState Shift, int X, int Y);
+	void __fastcall BlockMouseUp(TObject *Sender, TMouseButton Button, TShiftState Shift, int X, int Y);
+
+    // Helper to check if a button is an operator (based on our styling logic)
+    bool __fastcall IsOperator(TButton* Btn);
+
+public:		// User declarations
+	__fastcall TForm4(TComponent* Owner);
+};
+//---------------------------------------------------------------------------
+extern PACKAGE TForm4 *Form4;
+//---------------------------------------------------------------------------
+#endif

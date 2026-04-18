@@ -1,0 +1,212 @@
+#include <vcl.h>
+#pragma hdrstop
+#include "Unit4.h"
+#include "Unit5.h"
+//---------------------------------------------------------------------------
+#pragma package(smart_init)
+#pragma resource "*.dfm"
+TForm4 *Form4;
+
+__fastcall TForm4::TForm4(TComponent* Owner) : TForm(Owner), FIsDragging(false), FSelectedBlock(nullptr) {}
+
+__fastcall TForm4::~TForm4() {
+    for(auto b : FBlocks) delete b;
+}
+
+int __fastcall TForm4::GetPrecedence(String op) {
+    if (op == "+" || op == "-") return 1;
+    if (op == "*" || op == "/") return 2;
+    if (op == "^") return 3;
+    return 0;
+}
+
+int __fastcall TForm4::ApplyOp(int a, int b, String op) {
+    if (op == "+") return a + b;
+    if (op == "-") return a - b;
+    if (op == "*") return a * b;
+    if (op == "/") return (b != 0) ? a / b : 0;
+    return 0;
+}
+
+void __fastcall TForm4::btnEvaluateClick(TObject *Sender) {
+    int thresholdY = shapeDivider->Top;
+    std::vector<TMathBlock*> tray;
+    for (auto b : FBlocks) if (b->Visual->Top > thresholdY) tray.push_back(b);
+    if (tray.empty()) return;
+
+    // 1. Sort by X
+    std::sort(tray.begin(), tray.end(), [](TMathBlock* a, TMathBlock* b) {
+        return a->Visual->Left < b->Visual->Left;
+    });
+
+    // 2. Strict Grammar & Collision Validation
+    String fullInfix = "";
+    try {
+        for (size_t i = 0; i < tray.size(); ++i) {
+            TMathBlock* curr = tray[i];
+            fullInfix += curr->Value + " ";
+
+            // Collision Check
+            if (i < tray.size() - 1) {
+                TMathBlock* next = tray[i+1];
+                if (curr->Visual->Left + curr->Visual->Width >= next->Visual->Left) {
+                    throw Exception("Blocks are overlapping! Space them out.");
+                }
+
+                // GRAMMAR RULES:
+                // Rule: Number followed by Number (Invalid)
+                if (curr->Type == BlockType::Number && next->Type == BlockType::Number) {
+                    throw Exception("Two numbers cannot be next to each other (" + curr->Value + " and " + next->Value + ")");
+                }
+                // Rule: Operator followed by Operator (Invalid)
+                if (curr->Type == BlockType::Operator && next->Type == BlockType::Operator) {
+                    throw Exception("Two operators cannot be next to each other (" + curr->Value + " and " + next->Value + ")");
+                }
+                // Rule: Operator followed by Close Bracket
+                if (curr->Type == BlockType::Operator && next->Type == BlockType::BracketClose) {
+                    throw Exception("An operator cannot be followed by a closing bracket.");
+                }
+                // Rule: Open Bracket followed by Operator
+                if (curr->Type == BlockType::BracketOpen && next->Type == BlockType::Operator) {
+                    throw Exception("An opening bracket cannot be followed by an operator.");
+                }
+            }
+        }
+
+        // Start/End Rules
+        if (tray.front()->Type == BlockType::Operator)
+            throw Exception("Expression cannot start with an operator.");
+        if (tray.back()->Type == BlockType::Operator || tray.back()->Type == BlockType::BracketOpen)
+            throw Exception("Expression cannot end with an operator.");
+
+        // 3. Shunting-Yard: Infix to Postfix
+        std::queue<TMathBlock*> outputQueue;
+        std::stack<TMathBlock*> opStack;
+
+        for (auto b : tray) {
+            if (b->Type == BlockType::Number) {
+                outputQueue.push(b);
+            } else if (b->Type == BlockType::BracketOpen) {
+                opStack.push(b);
+            } else if (b->Type == BlockType::BracketClose) {
+                while (!opStack.empty() && opStack.top()->Type != BlockType::BracketOpen) {
+                    outputQueue.push(opStack.top());
+                    opStack.pop();
+                }
+                if (opStack.empty()) throw Exception("Mismatched Parentheses!");
+                opStack.pop();
+            } else if (b->Type == BlockType::Operator) {
+                while (!opStack.empty() && GetPrecedence(opStack.top()->Value) >= GetPrecedence(b->Value)) {
+                    outputQueue.push(opStack.top());
+                    opStack.pop();
+                }
+                opStack.push(b);
+            }
+        }
+        while (!opStack.empty()) {
+            if (opStack.top()->Type == BlockType::BracketOpen) throw Exception("Mismatched Parentheses!");
+            outputQueue.push(opStack.top());
+            opStack.pop();
+        }
+
+        // 4. Postfix Evaluation
+        std::stack<int> evalStack;
+        while (!outputQueue.empty()) {
+            TMathBlock* b = outputQueue.front();
+            outputQueue.pop();
+
+            if (b->Type == BlockType::Number) {
+                evalStack.push(b->Value.ToInt());
+            } else {
+                if (evalStack.size() < 2) throw Exception("Invalid syntax for operator " + b->Value);
+                int val2 = evalStack.top(); evalStack.pop();
+                int val1 = evalStack.top(); evalStack.pop();
+                evalStack.push(ApplyOp(val1, val2, b->Value));
+            }
+        }
+
+        if (evalStack.size() != 1) throw Exception("Incomplete expression.");
+        ShowMessage("Parsed Expression: " + fullInfix + "\nResult: " + IntToStr(evalStack.top()));
+
+    } catch (const Exception &e) {
+        ShowMessage("Validation Error: " + e.Message);
+    }
+}
+
+// --- LOGIC FROM PREVIOUS STEPS (Modified for Brackets) ---
+
+void __fastcall TForm4::btnAddBlockClick(TObject *Sender) {
+    TForm5 *Dlg = new TForm5(this);
+    try {
+        if (Dlg->ShowModal() == mrOk) {
+            BlockType t;
+            String val = Dlg->edtValue->Text;
+            int idx = Dlg->rgType->ItemIndex;
+            if (idx == 1) t = BlockType::Operator;
+            else if (idx == 2) { t = BlockType::BracketOpen; val = "("; }
+            else if (idx == 3) { t = BlockType::BracketClose; val = ")"; }
+            else t = BlockType::Number;
+            CreateBlock(t, val);
+        }
+    } __finally { delete Dlg; }
+}
+
+void __fastcall TForm4::CreateBlock(BlockType AType, String AValue) {
+    TButton *btn = new TButton(this);
+    btn->Parent = this;
+    btn->Caption = AValue;
+    btn->Width = 60; btn->Height = 40;
+    btn->Left = 20 + (FBlocks.size() * 70); btn->Top = 50;
+    btn->OnMouseDown = BlockMouseDown;
+    btn->OnMouseMove = BlockMouseMove;
+    btn->OnMouseUp = BlockMouseUp;
+
+    if (AType == BlockType::Operator) { btn->Font->Style = TFontStyles() << fsBold; btn->Font->Color = clMaroon; }
+    else if (AType == BlockType::BracketOpen || AType == BlockType::BracketClose) { btn->Font->Style = TFontStyles() << fsBold; btn->Font->Color = clGreen; }
+    else btn->Font->Color = clNavy;
+
+    FBlocks.push_back(new TMathBlock(btn, AType, AValue));
+}
+
+void __fastcall TForm4::btnDeleteSelectedClick(TObject *Sender) {
+    if (FSelectedBlock) {
+        delete FSelectedBlock->Visual;
+        auto it = std::find(FBlocks.begin(), FBlocks.end(), FSelectedBlock);
+        if (it != FBlocks.end()) { delete *it; FBlocks.erase(it); }
+        FSelectedBlock = nullptr;
+    }
+}
+
+void __fastcall TForm4::SetSelection(TMathBlock* ABlock) {
+    FSelectedBlock = ABlock;
+    if (ABlock && ABlock->Visual) ABlock->Visual->SetFocus();
+}
+
+TMathBlock* __fastcall TForm4::GetBlockFromButton(TObject* Sender) {
+    for(auto b : FBlocks) if(b->Visual == Sender) return b;
+    return nullptr;
+}
+
+void __fastcall TForm4::BlockMouseDown(TObject *Sender, TMouseButton Button, TShiftState Shift, int X, int Y) {
+    TMathBlock* clicked = GetBlockFromButton(Sender);
+    if (clicked) SetSelection(clicked);
+    if (Button == mbLeft) {
+        FIsDragging = true;
+        TControl *C = dynamic_cast<TControl*>(Sender);
+        FDragStartMouse = Mouse->CursorPos;
+        FDragStartPos = Point(C->Left, C->Top);
+        C->BringToFront();
+    }
+}
+
+void __fastcall TForm4::BlockMouseMove(TObject *Sender, TShiftState Shift, int X, int Y) {
+    if (FIsDragging) {
+        TControl *C = dynamic_cast<TControl*>(Sender);
+        C->Left = FDragStartPos.x + (Mouse->CursorPos.x - FDragStartMouse.x);
+        C->Top = FDragStartPos.y + (Mouse->CursorPos.y - FDragStartMouse.y);
+    }
+}
+
+void __fastcall TForm4::BlockMouseUp(TObject *Sender, TMouseButton Button, TShiftState Shift, int X, int Y) {
+    FIsDragging = false;
+}
