@@ -164,9 +164,9 @@ void __fastcall TForm4::CreateBlock(BlockType AType, String AValue) {
 	int padding = 20;
 	btn->Width = std::max(60, textWidth + padding);
 	btn->Height = 40;
+	// ---------------------------------
 
-
-	// po³ozenie przyciskow (nie dzia³a)
+	// Adjust placement logic to account for variable widths
 	int margin = 10;
 	if (FBlocks.empty()) {
 		btn->Left = 20;
@@ -176,7 +176,7 @@ void __fastcall TForm4::CreateBlock(BlockType AType, String AValue) {
 				btn->Top = 100;
 		   }
 		   else if (FBlocks.size() > 8) {
-				TButton* lastBtn = FBlocks.back()->Visual;
+                TButton* lastBtn = FBlocks.back()->Visual;
 		btn->Left = lastBtn->Left + lastBtn->Width + margin;
 				btn->Top = 100;
 		   }    else if (FBlocks.size() == 16) {
@@ -184,7 +184,7 @@ void __fastcall TForm4::CreateBlock(BlockType AType, String AValue) {
 				btn->Top = 150;
 		   }
 		   else if (FBlocks.size() > 16) {
-				TButton* lastBtn = FBlocks.back()->Visual;
+                TButton* lastBtn = FBlocks.back()->Visual;
 		btn->Left = lastBtn->Left + lastBtn->Width + margin;
 				btn->Top = 150;
 		   }
@@ -193,40 +193,40 @@ void __fastcall TForm4::CreateBlock(BlockType AType, String AValue) {
 		TButton* lastBtn = FBlocks.back()->Visual;
 		btn->Left = lastBtn->Left + lastBtn->Width + margin;
 		 btn->Top = 50;
-	}
+    }
 
 
 
-	btn->OnMouseDown = BlockMouseDown;
-	btn->OnMouseMove = BlockMouseMove;
-	btn->OnMouseUp = BlockMouseUp;
+    btn->OnMouseDown = BlockMouseDown;
+    btn->OnMouseMove = BlockMouseMove;
+    btn->OnMouseUp = BlockMouseUp;
 
-	// kolorki, te¿ nie dzia³aja
-	if (AType == BlockType::Operator) {
-		btn->Font->Style = TFontStyles() << fsBold;
-		btn->Font->Color = clMaroon;
-	}
-	else if (AType >= BlockType::BracketOpen) {
-		btn->Font->Style = TFontStyles() << fsBold;
-		btn->Font->Color = clGreen;
-	}
-	else btn->Font->Color = clNavy;
+    // Apply colors
+    if (AType == BlockType::Operator) {
+        btn->Font->Style = TFontStyles() << fsBold;
+        btn->Font->Color = clMaroon;
+    }
+    else if (AType >= BlockType::BracketOpen) {
+        btn->Font->Style = TFontStyles() << fsBold;
+        btn->Font->Color = clGreen;
+    }
+    else btn->Font->Color = clNavy;
 
-	FBlocks.push_back(new TMathBlock(btn, AType, AValue));
+    FBlocks.push_back(new TMathBlock(btn, AType, AValue));
 }
 
 void __fastcall TForm4::btnDeleteSelectedClick(TObject *Sender) {
-	if (FSelectedBlock) {
-		delete FSelectedBlock->Visual;
-		auto it = std::find(FBlocks.begin(), FBlocks.end(), FSelectedBlock);
-		if (it != FBlocks.end()) { delete *it; FBlocks.erase(it); }
-		FSelectedBlock = nullptr;
-	}
+    if (FSelectedBlock) {
+        delete FSelectedBlock->Visual;
+        auto it = std::find(FBlocks.begin(), FBlocks.end(), FSelectedBlock);
+        if (it != FBlocks.end()) { delete *it; FBlocks.erase(it); }
+        FSelectedBlock = nullptr;
+    }
 }
 
 void __fastcall TForm4::SetSelection(TMathBlock* ABlock) {
-	FSelectedBlock = ABlock;
-	if (ABlock && ABlock->Visual) ABlock->Visual->SetFocus();
+    FSelectedBlock = ABlock;
+    if (ABlock && ABlock->Visual) ABlock->Visual->SetFocus();
 }
 
 TMathBlock* __fastcall TForm4::GetBlockFromButton(TObject* Sender) {

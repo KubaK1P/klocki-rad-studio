@@ -39,22 +39,50 @@ void __fastcall TForm4::btnEvaluateClick(TObject *Sender) {
         return a->Visual->Left < b->Visual->Left;
     });
 
-    // 2. Validate collisions & basic grammar
+    // 2. Strict Grammar & Collision Validation
     String fullInfix = "";
-    for (size_t i = 0; i < tray.size(); ++i) {
-        fullInfix += tray[i]->Value + " ";
-        if (i < tray.size() - 1) {
-            if (tray[i]->Visual->Left + tray[i]->Visual->Width >= tray[i+1]->Visual->Left) {
-                ShowMessage("Collision detected! Space out the blocks."); return;
+    try {
+        for (size_t i = 0; i < tray.size(); ++i) {
+            TMathBlock* curr = tray[i];
+            fullInfix += curr->Value + " ";
+
+            // Collision Check
+            if (i < tray.size() - 1) {
+                TMathBlock* next = tray[i+1];
+                if (curr->Visual->Left + curr->Visual->Width >= next->Visual->Left) {
+                    throw Exception("Blocks are overlapping! Space them out.");
+                }
+
+                // GRAMMAR RULES:
+                // Rule: Number followed by Number (Invalid)
+                if (curr->Type == BlockType::Number && next->Type == BlockType::Number) {
+                    throw Exception("Two numbers cannot be next to each other (" + curr->Value + " and " + next->Value + ")");
+                }
+                // Rule: Operator followed by Operator (Invalid)
+                if (curr->Type == BlockType::Operator && next->Type == BlockType::Operator) {
+                    throw Exception("Two operators cannot be next to each other (" + curr->Value + " and " + next->Value + ")");
+                }
+                // Rule: Operator followed by Close Bracket
+                if (curr->Type == BlockType::Operator && next->Type == BlockType::BracketClose) {
+                    throw Exception("An operator cannot be followed by a closing bracket.");
+                }
+                // Rule: Open Bracket followed by Operator
+                if (curr->Type == BlockType::BracketOpen && next->Type == BlockType::Operator) {
+                    throw Exception("An opening bracket cannot be followed by an operator.");
+                }
             }
         }
-    }
 
-    // 3. Shunting-Yard: Infix to Postfix
-    std::queue<TMathBlock*> outputQueue;
-    std::stack<TMathBlock*> opStack;
+        // Start/End Rules
+        if (tray.front()->Type == BlockType::Operator)
+            throw Exception("Expression cannot start with an operator.");
+        if (tray.back()->Type == BlockType::Operator || tray.back()->Type == BlockType::BracketOpen)
+            throw Exception("Expression cannot end with an operator.");
 
-    try {
+        // 3. Shunting-Yard: Infix to Postfix
+        std::queue<TMathBlock*> outputQueue;
+        std::stack<TMathBlock*> opStack;
+
         for (auto b : tray) {
             if (b->Type == BlockType::Number) {
                 outputQueue.push(b);
@@ -66,7 +94,7 @@ void __fastcall TForm4::btnEvaluateClick(TObject *Sender) {
                     opStack.pop();
                 }
                 if (opStack.empty()) throw Exception("Mismatched Parentheses!");
-                opStack.pop(); // Pop '('
+                opStack.pop();
             } else if (b->Type == BlockType::Operator) {
                 while (!opStack.empty() && GetPrecedence(opStack.top()->Value) >= GetPrecedence(b->Value)) {
                     outputQueue.push(opStack.top());
@@ -90,18 +118,18 @@ void __fastcall TForm4::btnEvaluateClick(TObject *Sender) {
             if (b->Type == BlockType::Number) {
                 evalStack.push(b->Value.ToInt());
             } else {
-                if (evalStack.size() < 2) throw Exception("Invalid Operator Placement!");
+                if (evalStack.size() < 2) throw Exception("Invalid syntax for operator " + b->Value);
                 int val2 = evalStack.top(); evalStack.pop();
                 int val1 = evalStack.top(); evalStack.pop();
                 evalStack.push(ApplyOp(val1, val2, b->Value));
             }
         }
 
-        if (evalStack.size() != 1) throw Exception("Invalid Expression!");
+        if (evalStack.size() != 1) throw Exception("Incomplete expression.");
         ShowMessage("Parsed Expression: " + fullInfix + "\nResult: " + IntToStr(evalStack.top()));
 
     } catch (const Exception &e) {
-        ShowMessage("Error: " + e.Message);
+        ShowMessage("Validation Error: " + e.Message);
     }
 }
 
@@ -127,14 +155,64 @@ void __fastcall TForm4::CreateBlock(BlockType AType, String AValue) {
     TButton *btn = new TButton(this);
     btn->Parent = this;
     btn->Caption = AValue;
-    btn->Width = 60; btn->Height = 40;
-    btn->Left = 20 + (FBlocks.size() * 70); btn->Top = 50;
+
+    // --- DYNAMIC WIDTH CALCULATION ---
+    // Use the form's font settings to measure the text
+    this->Canvas->Font->Assign(btn->Font);
+    if (AType == BlockType::Operator || AType >= BlockType::BracketOpen) {
+        this->Canvas->Font->Style = TFontStyles() << fsBold;
+    }
+
+    int textWidth = this->Canvas->TextWidth(AValue);
+    int padding = 20; // Extra space so it's not cramped
+    btn->Width = std::max(60, textWidth + padding); // Minimum width of 60
+    btn->Height = 40;
+    // ---------------------------------
+
+    // Adjust placement logic to account for variable widths
+	int margin = 10;
+	if (FBlocks.empty()) {
+		btn->Left = 20;
+		 btn->Top = 50;
+	} else if (FBlocks.size() == 8) {
+				btn->Left = 20;
+				btn->Top = 100;
+		   }
+		   else if (FBlocks.size() > 8) {
+                TButton* lastBtn = FBlocks.back()->Visual;
+		btn->Left = lastBtn->Left + lastBtn->Width + margin;
+				btn->Top = 100;
+		   }    else if (FBlocks.size() == 16) {
+				btn->Left = 20;
+				btn->Top = 150;
+		   }
+		   else if (FBlocks.size() > 16) {
+                TButton* lastBtn = FBlocks.back()->Visual;
+		btn->Left = lastBtn->Left + lastBtn->Width + margin;
+				btn->Top = 150;
+		   }
+
+	else {
+		TButton* lastBtn = FBlocks.back()->Visual;
+		btn->Left = lastBtn->Left + lastBtn->Width + margin;
+		 btn->Top = 50;
+    }
+
+
+
     btn->OnMouseDown = BlockMouseDown;
     btn->OnMouseMove = BlockMouseMove;
     btn->OnMouseUp = BlockMouseUp;
 
-    if (AType == BlockType::Operator) { btn->Font->Style = TFontStyles() << fsBold; btn->Font->Color = clMaroon; }
-    else if (AType == BlockType::BracketOpen || AType == BlockType::BracketClose) { btn->Font->Style = TFontStyles() << fsBold; btn->Font->Color = clGreen; }
+    // Apply colors
+    if (AType == BlockType::Operator) {
+        btn->Font->Style = TFontStyles() << fsBold;
+        btn->Font->Color = clMaroon;
+    }
+    else if (AType >= BlockType::BracketOpen) {
+        btn->Font->Style = TFontStyles() << fsBold;
+        btn->Font->Color = clGreen;
+    }
     else btn->Font->Color = clNavy;
 
     FBlocks.push_back(new TMathBlock(btn, AType, AValue));
